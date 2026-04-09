@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { topics, platforms, quantity } = await req.json();
+    const { topics, configs } = await req.json();
 
-    if (!topics || !platforms || !quantity) {
+    if (!topics || !configs) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
@@ -16,18 +16,18 @@ export async function POST(req: Request) {
         resources: [] as any[],
       };
 
-      if (platforms.includes('youtube')) {
-        const ytVideos = await fetchYouTubeVideos(topic, quantity);
+      if (configs.youtube?.enabled) {
+        const ytVideos = await fetchYouTubeVideos(topic, configs.youtube.quantity);
         topicResults.resources.push(...ytVideos);
       }
 
-      if (platforms.includes('gfg')) {
-        const gfgArticles = await fetchGoogleSearch(topic, quantity, true);
+      if (configs.gfg?.enabled) {
+        const gfgArticles = await fetchGoogleSearch(topic, configs.gfg.quantity, true);
         topicResults.resources.push(...gfgArticles);
       }
 
-      if (platforms.includes('general')) {
-        const generalArticles = await fetchGoogleSearch(topic, quantity, false);
+      if (configs.general?.enabled) {
+        const generalArticles = await fetchGoogleSearch(topic, configs.general.quantity, false);
         topicResults.resources.push(...generalArticles);
       }
 
@@ -50,22 +50,35 @@ async function fetchYouTubeVideos(topic: string, quantity: number) {
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=${quantity}&q=${encodeURIComponent(topic)}&type=video&key=${apiKey}`;
   
+  console.log(`[DEBUG] Fetching YouTube for: ${topic}`);
+  console.log(`[DEBUG] YouTube URL: ${url.replace(apiKey, 'REDACTED')}`);
+
   try {
     const res = await fetch(url);
     const data = await res.json();
     
-    if (data.items) {
-      return data.items.map((item: any) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
-        url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-        platform: 'youtube',
-      }));
+    if (data.error) {
+      console.error(`[DEBUG] YouTube API Error: ${data.error.message}`);
+      return [];
     }
+
+    if (!data.items || data.items.length === 0) {
+      console.warn(`[DEBUG] No YouTube results found for: ${topic}`);
+      return [];
+    }
+
+    console.log(`[DEBUG] Found ${data.items.length} YouTube videos for: ${topic}`);
+
+    return data.items.map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+      platform: 'youtube',
+    }));
   } catch (error) {
-    console.error('YouTube Fetch Error:', error);
+    console.error('[DEBUG] YouTube Fetch Error:', error);
   }
   return [];
 }
@@ -79,25 +92,38 @@ async function fetchGoogleSearch(topic: string, quantity: number, isGFG: boolean
     return [];
   }
 
-  const query = isGFG ? `site:geeksforgeeks.org ${topic}` : `-site:geeksforgeeks.org ${topic}`;
+  const query = isGFG ? `site:geeksforgeeks.org ${topic}` : topic;
   const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=${quantity}`;
+
+  console.log(`[DEBUG] Fetching ${isGFG ? 'GFG' : 'General'} Search for: ${topic}`);
+  console.log(`[DEBUG] URL: ${url.replace(apiKey, 'REDACTED')}`);
 
   try {
     const res = await fetch(url);
     const data = await res.json();
 
-    if (data.items) {
-      return data.items.map((item: any) => ({
-        id: item.link,
-        title: item.title,
-        description: item.snippet,
-        thumbnail: item.pagemap?.cse_image?.[0]?.src || item.pagemap?.metatags?.[0]?.['og:image'],
-        url: item.link,
-        platform: isGFG ? 'gfg' : 'general',
-      }));
+    if (data.error) {
+      console.error(`[DEBUG] Google Search API Full Error Response:\n`, JSON.stringify(data, null, 2));
+      return [];
     }
+
+    if (!data.items || data.items.length === 0) {
+      console.warn(`[DEBUG] No results found for: ${topic}. Full response from Google:\n`, JSON.stringify(data, null, 2));
+      return [];
+    }
+
+    console.log(`[DEBUG] Found ${data.items.length} results for: ${topic}`);
+
+    return data.items.map((item: any) => ({
+      id: item.link,
+      title: item.title,
+      description: item.snippet,
+      thumbnail: item.pagemap?.cse_image?.[0]?.src || item.pagemap?.metatags?.[0]?.['og:image'],
+      url: item.link,
+      platform: isGFG ? 'gfg' : 'general',
+    }));
   } catch (error) {
-    console.error('Google Search Fetch Error:', error);
+    console.error('[DEBUG] Google Search Fetch Error:', error);
   }
   return [];
 }
