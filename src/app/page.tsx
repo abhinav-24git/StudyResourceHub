@@ -107,8 +107,8 @@ export default function PathFinderPage() {
                 icon={<Youtube className="text-red-500" />} 
                 enabled={configs.youtube.enabled}
                 quantity={configs.youtube.quantity}
-                onToggle={(val) => updateConfig('youtube', 'enabled', val)}
-                onQuantityChange={(val) => updateConfig('youtube', 'quantity', val)}
+                onToggle={(val: any) => updateConfig('youtube', 'enabled', val)}
+                onQuantityChange={(val: any) => updateConfig('youtube', 'quantity', val)}
               />
               <PlatformControl 
                 id="gfg" 
@@ -116,8 +116,8 @@ export default function PathFinderPage() {
                 icon={<BookOpen className="text-green-500" />} 
                 enabled={configs.gfg.enabled}
                 quantity={configs.gfg.quantity}
-                onToggle={(val) => updateConfig('gfg', 'enabled', val)}
-                onQuantityChange={(val: number) => updateConfig('gfg', 'quantity', val)}
+                onToggle={(val: any) => updateConfig('gfg', 'enabled', val)}
+                onQuantityChange={(val: any) => updateConfig('gfg', 'quantity', val)}
                 isDisabled={true}
               />
               <PlatformControl 
@@ -126,8 +126,8 @@ export default function PathFinderPage() {
                 icon={<Globe className="text-blue-500" />} 
                 enabled={configs.general.enabled}
                 quantity={configs.general.quantity}
-                onToggle={(val) => updateConfig('general', 'enabled', val)}
-                onQuantityChange={(val: number) => updateConfig('general', 'quantity', val)}
+                onToggle={(val: any) => updateConfig('general', 'enabled', val)}
+                onQuantityChange={(val: any) => updateConfig('general', 'quantity', val)}
                 isDisabled={true}
               />
             </div>
