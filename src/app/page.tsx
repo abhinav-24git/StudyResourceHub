@@ -13,8 +13,8 @@ export default function PathFinderPage() {
   const [syllabus, setSyllabus] = useState("")
   const [configs, setConfigs] = useState({
     youtube: { enabled: true, quantity: 3 },
-    gfg: { enabled: false, quantity: 3 },
-    general: { enabled: false, quantity: 3 }
+    gfg: { enabled: true, quantity: 3 },
+    general: { enabled: true, quantity: 3 }
   })
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -118,7 +118,6 @@ export default function PathFinderPage() {
                 quantity={configs.gfg.quantity}
                 onToggle={(val: any) => updateConfig('gfg', 'enabled', val)}
                 onQuantityChange={(val: any) => updateConfig('gfg', 'quantity', val)}
-                isDisabled={true}
               />
               <PlatformControl 
                 id="general" 
@@ -128,7 +127,6 @@ export default function PathFinderPage() {
                 quantity={configs.general.quantity}
                 onToggle={(val: any) => updateConfig('general', 'enabled', val)}
                 onQuantityChange={(val: any) => updateConfig('general', 'quantity', val)}
-                isDisabled={true}
               />
             </div>
           </div>
